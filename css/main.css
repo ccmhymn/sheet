@@ -1,0 +1,406 @@
+/* ════════════════════════════════════════════
+   찬송가 악보 검색  —  Bootstrap 5 기반
+   Hymn Ver 13.0
+   ════════════════════════════════════════════ */
+
+@import url('https://fonts.googleapis.com/css2?family=Nanum+Gothic:wght@400;700&display=swap');
+
+/* ── 전역 ── */
+*, *::before, *::after { box-sizing: border-box; }
+
+body,
+input, button, select, pre, table, th, td {
+    font-family: 'Nanum Gothic', sans-serif;
+}
+
+body {
+    display: flex;
+    flex-direction: column;
+    margin: 0;
+    padding: 0;
+    background: #f1f5f9;
+}
+
+/* ════════════════════════════════════════════
+   앱 헤더
+   ════════════════════════════════════════════ */
+
+#appHeader {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 14px;
+    background: #1e293b;
+    border-bottom: 2px solid #3b82f6;
+    min-height: 50px;
+}
+
+.app-brand {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-shrink: 0;
+    color: #f1f5f9;
+}
+
+.app-brand .bi {
+    color: #60a5fa;
+    font-size: 1.2em;
+}
+
+.brand-name {
+    font-size: 1.15em;
+    font-weight: 700;
+    color: #f1f5f9;
+    letter-spacing: -0.02em;
+    white-space: nowrap;
+}
+
+.brand-subtitle {
+    font-size: 0.85em;
+    color: #94a3b8;
+    white-space: nowrap;
+}
+
+/* 검색 영역 */
+.header-search {
+    flex: 1;
+    min-width: 0;
+}
+
+.search-wrap {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.search-icon {
+    position: absolute;
+    left: 10px;
+    color: #94a3b8;
+    font-size: 0.9em;
+    pointer-events: none;
+    z-index: 1;
+}
+
+.search-input {
+    width: 100%;
+    padding: 6px 10px 6px 32px;
+    border: 1.5px solid #334155;
+    border-radius: 20px;
+    background: #0f172a;
+    color: #f1f5f9;
+    font-size: 0.88em;
+    font-family: 'Nanum Gothic', sans-serif;
+    transition: border-color 0.15s, box-shadow 0.15s;
+    outline: none;
+}
+
+.search-input::placeholder { color: #475569; }
+
+.search-input:focus {
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.25);
+    background: #0f172a;
+    color: #f1f5f9;
+}
+
+/* 헤더 우측 액션 */
+.header-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+}
+
+.version-badge {
+    font-size: 0.72em;
+    color: #64748b;
+    white-space: nowrap;
+}
+
+#toggleExtraCols {
+    white-space: nowrap;
+    font-size: 0.82em;
+}
+
+#toggleExtraCols.active {
+    background: #3b82f6 !important;
+    border-color: #3b82f6 !important;
+    color: #fff !important;
+}
+
+
+/* ════════════════════════════════════════════
+   테이블 영역
+   ════════════════════════════════════════════ */
+
+#tableWrapper {
+    padding: 6px 10px 12px;
+}
+
+/* DataTables 기본 툴바(검색/길이) 숨김 — 헤더에 통합 */
+#tableWrapper .dataTables_length,
+#tableWrapper .dataTables_filter {
+    display: none;
+}
+
+/* 수평 스크롤 방지 */
+.dataTables_wrapper {
+    overflow-x: hidden;
+}
+
+/* ── 헤더 행 (정렬 클릭) ── */
+#myTable.dataTable thead th {
+    background: #1e293b !important;
+    color: #e2e8f0 !important;
+    border-color: #334155 !important;
+    font-weight: 700;
+    font-size: 0.85em;
+    padding: 7px 8px !important;
+    white-space: nowrap !important;
+    cursor: pointer;
+}
+
+#myTable.dataTable thead th:hover {
+    background: #334155 !important;
+}
+
+/* ── tfoot 컬럼 검색 행 ── */
+#myTable.dataTable tfoot th {
+    background: #0f172a !important;
+    padding: 4px !important;
+    border-color: #334155 !important;
+    cursor: default;
+}
+
+/* ── 컬럼 검색 input ── */
+.column_search {
+    width: 100%;
+    font-size: 0.8em;
+    border-radius: 6px !important;
+    border: 1px solid #334155 !important;
+    background: #1e293b !important;
+    color: #e2e8f0 !important;
+    padding: 3px 6px !important;
+}
+
+.column_search::placeholder { color: #475569 !important; }
+
+.column_search:focus {
+    border-color: #3b82f6 !important;
+    background: #1e293b !important;
+    color: #e2e8f0 !important;
+    box-shadow: none !important;
+    outline: none !important;
+}
+
+/* ── 셀 공통 ── */
+#myTable.dataTable td,
+#myTable.dataTable th {
+    white-space: normal !important;
+    word-break: break-word;
+    overflow-wrap: break-word;
+    vertical-align: middle;
+}
+
+/* ── 바디 행 ── */
+#myTable.dataTable tbody tr {
+    cursor: pointer;
+    transition: background-color 0.1s ease;
+}
+
+#myTable.dataTable tbody td {
+    font-size: 0.88em;
+    padding: 7px 8px;
+    border-color: #e2e8f0;
+}
+
+/* 선택된 행 강조 */
+tr.active-hymn-row td {
+    background-color: #dbeafe !important;
+    border-left: 3px solid #2563eb;
+}
+
+/* DataTables 정렬 아이콘 */
+table.dataTable thead th.sorting::after,
+table.dataTable thead th.sorting_asc::after,
+table.dataTable thead th.sorting_desc::after {
+    opacity: 0.6;
+}
+
+/* DataTables info 바 */
+.dataTables_info {
+    font-size: 0.8em;
+    color: #64748b;
+    padding: 4px 2px !important;
+}
+
+/* ── 페이지네이션 ── */
+.dataTables_paginate {
+    display: flex !important;
+    flex-wrap: wrap;
+    gap: 2px;
+    align-items: center;
+    padding: 4px 0;
+}
+
+.dataTables_paginate .paginate_button {
+    padding: 3px 8px !important;
+    font-size: 0.82em !important;
+    border-radius: 4px !important;
+}
+
+
+/* ════════════════════════════════════════════
+   모달
+   ════════════════════════════════════════════ */
+
+.modal-header {
+    background: #f8fafc;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.modal-footer {
+    background: #f8fafc;
+    border-top: 1px solid #e2e8f0;
+}
+
+/* 악보 이미지 오버레이 */
+.sheet-img-wrap {
+    position: relative;
+    overflow: hidden;
+    background: #f8fafc;
+    line-height: 0;
+}
+
+.sheet-img-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.35);
+    opacity: 0;
+    transition: opacity 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.sheet-img-wrap:hover .sheet-img-overlay { opacity: 1; }
+
+/* 모바일: 오버레이 항상 표시 */
+@media (max-width: 480px) {
+    .sheet-img-overlay { opacity: 0.85; }
+}
+
+/* 가사 영역 */
+.lyrics-box {
+    max-height: 35vh;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    background: #fff;
+    font-size: 0.85em;
+    line-height: 1.7;
+}
+
+.lyrics-box pre {
+    white-space: pre-wrap;
+    word-break: break-word;
+    margin: 0;
+    font-family: 'Nanum Gothic', sans-serif;
+    font-size: inherit;
+}
+
+/* MIDI 컨트롤 영역 */
+.midi-box {
+    max-height: 30vh;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+/* portrait 또는 좁은 화면 → 수직 스택 */
+@media (orientation: portrait), (max-width: 767px) {
+    #imgCol, #descCol {
+        flex: 0 0 100%;
+        max-width: 100%;
+    }
+    #preview {
+        max-height: 42vh;
+        object-fit: contain;
+        width: 100%;
+    }
+    .lyrics-box { max-height: 28vh; }
+    .midi-box   { max-height: 25vh; }
+}
+
+/* landscape + 소형 화면 → 좌우 분할 */
+@media (orientation: landscape) and (max-width: 900px) {
+    #imgCol  { flex: 0 0 45%; max-width: 45%; }
+    #descCol { flex: 0 0 55%; max-width: 55%; }
+    #preview {
+        max-height: 58vh;
+        object-fit: contain;
+        width: 100%;
+    }
+    .lyrics-box { max-height: 25vh; }
+    .midi-box   { max-height: 22vh; }
+}
+
+
+/* ════════════════════════════════════════════
+   MIDI 컨트롤 스타일
+   ════════════════════════════════════════════ */
+
+.midi-title {
+    font-size: 0.85em;
+    font-weight: 700;
+    color: #1e40af;
+    margin-bottom: 6px;
+}
+
+.midi-controls-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 6px;
+    flex-wrap: wrap;
+}
+
+#position {
+    flex: 1;
+    min-width: 80px;
+}
+
+#percent {
+    font-size: 0.8em;
+    color: #64748b;
+    min-width: 36px;
+    text-align: right;
+}
+
+.advanced-controls label {
+    font-size: 0.78em;
+    color: #64748b;
+    margin-bottom: 2px;
+}
+
+.advanced-controls .form-select {
+    font-size: 0.8em;
+    padding: 2px 6px;
+}
+
+.advanced-controls input[type="range"] {
+    width: 100%;
+}
+
+
+/* ════════════════════════════════════════════
+   모바일 소형 대응
+   ════════════════════════════════════════════ */
+
+@media (max-width: 400px) {
+    #appHeader { padding: 6px 8px; gap: 6px; }
+    .brand-name { font-size: 1em; }
+    .search-input { font-size: 0.82em; }
+    #toggleExtraCols .bi { font-size: 0.9em; }
+}
