@@ -215,38 +215,34 @@ function buildControls(song) {
     stopBtn.setAttribute('disabled', 'disabled');
 
     startBtn.onclick = function() {
-        // iOS 핵심: 사용자 제스처 안에서
-        //   1) AudioContext resume
-        //   2) reverberator/input 오디오 그래프 연결 (비동기 콜백에서 하면 iOS 소리 안남)
-        //   3) 무음 버퍼로 오디오 시스템 완전 활성화
-        //   4) 재생
-        audioContext.resume().then(function() {
-            // 오디오 그래프 설정 (없을 때만 생성 — 같은 곡 재play 시 재사용)
-            if (!reverberator || !input) {
-                reverberator = player.createReverberator(audioContext);
-                reverberator.output.connect(audioContext.destination);
-                input = reverberator.input;
-            }
-            // iOS 무음 버퍼 재생으로 오디오 잠금 완전 해제
-            try {
-                var buf = audioContext.createBuffer(1, 1, audioContext.sampleRate);
-                var src = audioContext.createBufferSource();
-                src.buffer = buf;
-                src.connect(audioContext.destination);
-                src.start(0);
-            } catch (e) {}
+        // ── iOS 핵심 수정 ──
+        // .then() 콜백은 iOS Safari에서 사용자 제스처로 인식되지 않아 소리가 차단됨.
+        // 모든 오디오 그래프 설정과 재생을 onclick 동기 컨텍스트 안에서 수행해야 함.
 
-            startBtn.setAttribute('disabled', 'disabled');
-            susresBtn.removeAttribute('disabled');
-            stopBtn.removeAttribute('disabled');
-            go();
-            audioContext.onstatechange = function() {
-                console.log(audioContext.state);
-            };
-        }).catch(function(err) {
-            console.error('AudioContext resume 실패:', err);
-            document.getElementById('percent').innerHTML = '재생 오류';
-        });
+        // 1) 오디오 그래프 동기 설정 (같은 곡 재play 시 재사용)
+        if (!reverberator || !input) {
+            reverberator = player.createReverberator(audioContext);
+            reverberator.output.connect(audioContext.destination);
+            input = reverberator.input;
+        }
+
+        // 2) iOS 잠금 해제: 무음 버퍼를 동기적으로 재생
+        try {
+            var buf = audioContext.createBuffer(1, 1, audioContext.sampleRate);
+            var src = audioContext.createBufferSource();
+            src.buffer = buf;
+            src.connect(audioContext.destination);
+            src.start(0);
+        } catch (e) {}
+
+        // 3) resume() 호출 — Promise를 기다리지 않고 동기 컨텍스트 유지
+        audioContext.resume();
+
+        // 4) 재생 시작
+        startBtn.setAttribute('disabled', 'disabled');
+        susresBtn.removeAttribute('disabled');
+        stopBtn.removeAttribute('disabled');
+        go();
     };
 
     // suspend/resume the audiocontext
