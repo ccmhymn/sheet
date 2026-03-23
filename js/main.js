@@ -103,13 +103,21 @@ $(document).ready(function () {
                 var rowData = table.row(this).data();
                 if (!rowData) return;
 
-                // iOS AudioContext unlock (사용자 제스처 내에서)
+                // iOS AudioContext unlock — 사용자 제스처 안에서 resume + 무음 버퍼로 오디오 시스템 활성화
                 var AudioContextFunc = window.AudioContext || window.webkitAudioContext;
                 if (AudioContextFunc) {
                     if (typeof audioContext === 'undefined' || audioContext === null || audioContext.state === 'closed') {
                         audioContext = new AudioContextFunc();
                     }
-                    audioContext.resume();
+                    audioContext.resume().then(function () {
+                        try {
+                            var buf = audioContext.createBuffer(1, 1, audioContext.sampleRate);
+                            var src = audioContext.createBufferSource();
+                            src.buffer = buf;
+                            src.connect(audioContext.destination);
+                            src.start(0);
+                        } catch (e) {}
+                    });
                 }
 
                 // 선택된 행 강조

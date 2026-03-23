@@ -101,18 +101,15 @@ function sendNotes(song, songStart, start, end, audioContext, input, player) {
 
 function startLoad(song) {
     console.log(song);
-    // ── iOS/Android 대응: main.js 클릭 핸들러에서 이미 생성된 audioContext를 재사용 ──
-    // 비동기 콜백(XHR onload) 내에서 new AudioContext() 하면 iOS에서 suspended 상태가 됨
+    // iOS 핵심 수정:
+    // reverberator/input 오디오 그래프 설정은 비동기 콜백에서 하면 iOS에서 소리 안남.
+    // → play 버튼 클릭(사용자 제스처) 시점으로 이동.
+    // 여기서는 악기 파일 프리로딩만 수행.
     var AudioContextFunc = window.AudioContext || window.webkitAudioContext;
     if (!audioContext || audioContext.state === 'closed') {
-        // 폴백: 혹시 context가 없으면 새로 생성 (데스크탑 환경 등)
         audioContext = new AudioContextFunc();
     }
-    audioContext.resume(); // iOS: 사용자 제스처 이후라도 명시적으로 resume 호출
     player = new WebAudioFontPlayer();
-    reverberator = player.createReverberator(audioContext);
-    reverberator.output.connect(audioContext.destination);
-    input = reverberator.input;
     for (var i = 0; i < song.tracks.length; i++) {
         var nn = player.loader.findInstrument(song.tracks[i].program);
         var info = player.loader.instrumentInfo(nn);
@@ -134,7 +131,7 @@ function startLoad(song) {
 }
 
 function buildControls(song) {
-    audioContext.resume(); // 재생 전 context 활성화 보장
+    // resume/오디오 그래프 설정은 startBtn.onclick(사용자 제스처)에서 처리
     var o = document.getElementById('cntls');
     var isMobile = window.innerWidth < 760;
     var isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
@@ -218,8 +215,27 @@ function buildControls(song) {
     stopBtn.setAttribute('disabled', 'disabled');
 
     startBtn.onclick = function() {
-        // ── iOS 핵심 수정: 재생 버튼 클릭(사용자 제스처)에서 resume() 호출 후 재생 ──
+        // iOS 핵심: 사용자 제스처 안에서
+        //   1) AudioContext resume
+        //   2) reverberator/input 오디오 그래프 연결 (비동기 콜백에서 하면 iOS 소리 안남)
+        //   3) 무음 버퍼로 오디오 시스템 완전 활성화
+        //   4) 재생
         audioContext.resume().then(function() {
+            // 오디오 그래프 설정 (없을 때만 생성 — 같은 곡 재play 시 재사용)
+            if (!reverberator || !input) {
+                reverberator = player.createReverberator(audioContext);
+                reverberator.output.connect(audioContext.destination);
+                input = reverberator.input;
+            }
+            // iOS 무음 버퍼 재생으로 오디오 잠금 완전 해제
+            try {
+                var buf = audioContext.createBuffer(1, 1, audioContext.sampleRate);
+                var src = audioContext.createBufferSource();
+                src.buffer = buf;
+                src.connect(audioContext.destination);
+                src.start(0);
+            } catch (e) {}
+
             startBtn.setAttribute('disabled', 'disabled');
             susresBtn.removeAttribute('disabled');
             stopBtn.removeAttribute('disabled');
